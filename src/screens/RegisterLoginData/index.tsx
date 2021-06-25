@@ -15,6 +15,7 @@ import {
   HeaderTitle,
   Form
 } from './styles';
+import { Email, Title } from '../../components/LoginDataItem/styles';
 
 interface FormData {
   title: string;
@@ -29,6 +30,8 @@ const schema = Yup.object().shape({
 })
 
 export function RegisterLoginData() {
+  const dataKey = "@passmanager:logins"
+
   const {
     control,
     handleSubmit,
@@ -36,15 +39,33 @@ export function RegisterLoginData() {
     formState: {
       errors
     }
-  } = useForm();
+  } = useForm({
+    resolver: yupResolver(schema)
+  });
 
   async function handleRegister(formData: FormData) {
     const newLoginData = {
       id: String(uuid.v4()),
       ...formData
     }
+    
+    try {
+      const storageKey = '@passmanager:logins';
 
-    // Save data on AsyncStorage
+      const data = await AsyncStorage.getItem(storageKey);
+      const currentData = data ? JSON.parse(data) : [];
+
+      const dataFormatted = [
+        ...currentData,
+        newLoginData
+      ];
+
+      await AsyncStorage.setItem(storageKey, JSON.stringify(dataFormatted));
+      reset();
+
+    } catch (error) {
+      Alert.alert("Erro");
+    }
   }
 
   return (
@@ -60,9 +81,7 @@ export function RegisterLoginData() {
           <Input
             title="Título"
             name="title"
-            error={
-              // message error here
-            }
+            error={errors.title && errors.title.message}
             control={control}
             placeholder="Escreva o título aqui"
             autoCapitalize="sentences"
@@ -71,9 +90,7 @@ export function RegisterLoginData() {
           <Input
             title="Email"
             name="email"
-            error={
-              // message error here
-            }
+            error={errors.email && errors.email.message}
             control={control}
             placeholder="Escreva o Email aqui"
             autoCorrect={false}
@@ -83,9 +100,7 @@ export function RegisterLoginData() {
           <Input
             title="Senha"
             name="password"
-            error={
-              // message error here
-            }
+            error={errors.password && errors.password.message}
             control={control}
             secureTextEntry
             placeholder="Escreva a senha aqui"
